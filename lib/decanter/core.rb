@@ -15,7 +15,23 @@ module Decanter
         @inputs ||= {}.with_indifferent_access
       end
 
+      def squashed_inputs
+        @squashed_inputs ||= {}.with_indifferent_access
+      end
+
+      def parsed_inputs
+        @parsed_inputs
+      end
+
       def input(name=nil, type, **options)
+        set_input options, {
+          name:    name,
+          options: options.reject { |k| k == :context },
+          type:    type
+        }
+      end
+
+      def squashed_input(name=nil, type, **options)
         set_input options, {
           name:    name,
           options: options.reject { |k| k == :context },
@@ -29,6 +45,14 @@ module Decanter
 
       def input_for(name, context)
         (inputs[context || :default] || {})[name]
+      end
+
+      def squashed_input_for(name, context)
+        (squashed_inputs[context || :default] || {})[name]
+      end
+
+      def set_squashed_input(options, squashed_input_cfg)
+        set_for_context options, squashed_input_cfg, squashed_inputs
       end
 
       def has_many(name=nil, **options)
@@ -78,9 +102,17 @@ module Decanter
       end
 
       def decant(args={}, context=nil)
-        Hash[
-          args.keys.map { |key| handle_arg(key, args[key], context) }.compact
-        ]
+        @parsed_inputs = {}.with_indifferent_access
+        args.keys.each do |key|
+          key_array = handle_arg(key, args[key], context)
+          @parsed_inputs[key_array.first] = key_array.second
+        end
+        @parsed_inputs
+      end
+
+      def transform(args)
+        # hook for subclasses
+        args
       end
 
       def handle_arg(name, value, context)
@@ -92,8 +124,18 @@ module Decanter
         when assoc = has_many_for(name, context)
           decanter = Decanter::decanter_for(assoc[1][:options][:decanter] || assoc.first)
           [assoc.pop[:key], value.map { |val| decanter.decant(val, context) }]
+        when squashed_input_cfg = squashed_input_for(name, context)
+          [name, squash(name, squashed_input_cfg[:type], squashed_input_cfg[:options])]
         else
           context ? nil : [name, value]
+        end
+      end
+
+      def squash(name, type, options)
+        inputs = options[:squash]
+        Squasher.squasher_for(type).squash(name, inputs, options)
+        inputs.each do |key_to_squash|
+          @parsed_inputs.delete(key_to_squash)
         end
       end
 
