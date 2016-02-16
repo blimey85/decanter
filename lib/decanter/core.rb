@@ -117,8 +117,8 @@ module Decanter
       def run_squashers(context=nil)
         squashed_inputs_keys = squashed_inputs[context || :default].try(:keys) || []
         squashed_inputs_keys.each do |key|
-          key_array = handle_arg(key, nil, context)
-          @parsed_inputs[key_array.first] = key_array.second
+          squashed_input_cfg = squashed_input_for(key, context)
+          @parsed_inputs[key] = squash(name, squashed_input_cfg[:type], squashed_input_cfg[:options])
         end
         @parsed_inputs
       end
@@ -137,8 +137,6 @@ module Decanter
         when assoc = has_many_for(name, context)
           decanter = Decanter::decanter_for(assoc[1][:options][:decanter] || assoc.first)
           [assoc.pop[:key], value.map { |val| decanter.decant(val, context) }]
-        when squashed_input_cfg = squashed_input_for(name, context)
-          [name, squash(name, squashed_input_cfg[:type], squashed_input_cfg[:options])]
         else
           context ? nil : [name, value]
         end
