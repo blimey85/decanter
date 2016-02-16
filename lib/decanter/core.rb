@@ -108,13 +108,10 @@ module Decanter
       end
 
       def run_parsers(args={}, context=nil)
-        # args.keys.each do |key|
-        #   key_array = handle_arg(key, args[key], context)
-        #   @parsed_inputs[key_array.first] = key_array.second
-        # end
-        @parsed_inputs = Hash[
-          *args.keys.map { |key| handle_arg(key, args[key], context) }.flatten.compact
-        ].with_indifferent_access
+        array = *args.keys.map do |key|
+          handle_arg(key, args[key], context)
+        end.compact
+        @parsed_inputs = Hash[array].with_indifferent_access
       end
 
       def run_squashers(context=nil)
