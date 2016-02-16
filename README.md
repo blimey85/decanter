@@ -335,8 +335,12 @@ rails g squasher Date
 # app/decanter/squashers/date_squasher.rb
 
 class DateSquasher < Decanter::Squasher::Base
-  squasher do |name, type, options, inputs|
-    Date.new(inputs[:year], inputs[:month], inputs[:day])
+  squasher do |name, values, options|    
+    # i.e. values = [1, 15, 2015] to correspond with squash option above
+    day = values[0]
+    month = values[1]
+    year = values[2]
+    Date.new(year, month, day)
   end
 end
 ```
