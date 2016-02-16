@@ -32,7 +32,7 @@ module Decanter
       end
 
       def squashed_input(name=nil, type, **options)
-        set_input options, {
+        set_squashed_input options, {
           name:    name,
           options: options.reject { |k| k == :context },
           type:    type
@@ -103,8 +103,22 @@ module Decanter
 
       def decant(args={}, context=nil)
         @parsed_inputs = {}.with_indifferent_access
+        run_parsers(args, context)
+        run_squashers(args, context)
+        transform(@parsed_inputs)
+      end
+
+      def run_parsers(args={}, context=nil)
         args.keys.each do |key|
           key_array = handle_arg(key, args[key], context)
+          @parsed_inputs[key_array.first] = key_array.second
+        end
+      end
+
+      def run_squashers(args={}, context=nil)
+        squashed_inputs_keys = squashed_inputs[context || :default].try(:keys) || []
+        squashed_inputs_keys.each do |key|
+          key_array = handle_arg(key, nil, context)
           @parsed_inputs[key_array.first] = key_array.second
         end
         @parsed_inputs
@@ -132,11 +146,13 @@ module Decanter
       end
 
       def squash(name, type, options)
-        inputs = options[:squash]
-        Squasher.squasher_for(type).squash(name, inputs, options)
-        inputs.each do |key_to_squash|
+        inputs_to_squash = options[:squash]
+        values = inputs_to_squash.map { |input| @parsed_inputs[input] }
+        squashed_value = Squasher.squasher_for(type).squash(name, values, options)
+        inputs_to_squash.each do |key_to_squash|
           @parsed_inputs.delete(key_to_squash)
         end
+        squashed_value
       end
 
       def parse(name, type, val, options)
