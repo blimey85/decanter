@@ -110,7 +110,7 @@ module Decanter
       def run_parsers(args={}, context=nil)
         array = *args.keys.map do |key|
           handle_arg(key, args[key], context)
-        end.compact
+        end
         @parsed_inputs = Hash[array].with_indifferent_access
       end
 
@@ -138,7 +138,7 @@ module Decanter
           decanter = Decanter::decanter_for(assoc[1][:options][:decanter] || assoc.first)
           [assoc.pop[:key], value.map { |val| decanter.decant(val, context) }]
         else
-          context ? nil : [name, value]
+          context ? [name, nil] : [name, value]
         end
       end
 
