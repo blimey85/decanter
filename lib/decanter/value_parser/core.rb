@@ -15,19 +15,24 @@ module Decanter
             if options[:required]
               raise ArgumentError.new("No value for required argument: #{name}")
             else
-              return val
+              return [name, val]
             end
           end
 
           if @allowed && @allowed.include?(val.class)
-            return val
+            return [name, val]
           end
 
           unless @parser
             raise ArgumentError.new("No parser for argument: #{name} with type: #{val.class}")
           end
 
-          @parser.call(name, val, options)
+          case @result
+          when :raw
+            @parser.call(name, val, options)
+          else
+            [name, @parser.call(name, val, options)]
+          end
         end
 
         def parser(&block)
@@ -36,6 +41,10 @@ module Decanter
 
         def allow(*args)
           @allowed = args
+        end
+
+        def result(opt)
+          @result = opt
         end
       end
     end
