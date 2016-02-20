@@ -107,6 +107,7 @@ class TripsController < ApplicationController
     elsee
       render 'new'
     end
+  end
 
     private
 
@@ -116,6 +117,36 @@ class TripsController < ApplicationController
   end
 end
 ```
+```ruby
+class TripsController < ApplicationController
+  def create
+    @trip = Trip.new(trip_params)
+    @trip.start_date = Date.strptime(trip_params[:start_date], '%m/%d/%Y') if trip_params[:start_date].present?
+    @trip.end_date = Date.strptime(trip_params[:end_date], '%m/%d/%Y') if trip_params[:end_date].present?
+
+    @trip.destinations.each_with_index do |destination, index|
+      arrival_date = trip_params[:destinations_attributes]["#{index}"][:arrival_date]
+      departure_date = trip_params[:destinations_attributes]["#{index}"][:departure_date]
+      destination.arrival_date = Date.strptime(arrival_date, '%m/%d/%Y') if arrival_date.present?
+      destination.departure_date = Date.strptime(departure_date, '%m/%d/%Y') if departure_date.present?
+    end
+
+    if @trip.save
+      redirect_to trips_path
+    else
+      render 'new'
+    end
+  end
+
+    private
+
+      def trip_params
+        params.require(:trip).permit(:start_date, :end_date)
+      end
+  end
+end
+```
+
 
 We can see here that converting start_date and end_date to a Ruby date is creating complexity. Could you imagine the complexity involved with performing similar parsing with a nested resource? If you're curious how ugly it would get, we took the liberty of implementing an example here: [Nested Example (Without Decanter)](https://github.com/LaunchPadLab/decanter_demo/blob/master/app/controllers/nested_example/trips_no_decanter_controller.rb)
 
