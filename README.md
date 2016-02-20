@@ -322,6 +322,23 @@ class TripsController < ApplicationController
 end
 ```
 
+```ruby
+class TripDecanter < Decanter::Base
+  input :start_date, :date
+  input :end_date, :date
+  has_many :destinations
+end
+```
+
+```ruby
+class DestinationDecanter < Decanter::Base
+  input :arrival_date, :date
+  input :departure_date, :date
+  input :city, :string
+  input :state, :string
+end
+```
+
 Each of the destinations in our params[:trip] are automatically parsed according to the DestinationDecanter inputs set above. This means that ```arrival_date``` and ```departure_date``` are converted to Ruby Date objects for each of the destinations passed through the nested params. Yeehaw!
 
 Non Database-Backed Objects
