@@ -305,7 +305,7 @@ With that, we can use the same vanilla create action syntax you saw in the basic
 ```ruby
 class TripsController < ApplicationController
   def create
-    @trip = Trip.decant_new(params[:trip])
+    @trip = Trip.decant_new(trip_params)
 
     if @trip.save
       redirect_to trips_path
@@ -313,6 +313,12 @@ class TripsController < ApplicationController
       render 'new'
     end
   end
+
+  private
+
+    def trip_params
+      params.require(:trip).permit(:start_date, :end_date)
+    end
 end
 ```
 
