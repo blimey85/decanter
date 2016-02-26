@@ -200,19 +200,29 @@ class TripDecanter < Decanter::Base
 end
 ```
 
-You can add your own parser if you want more control over the logic, or if you have a peculiar format type we don't support.
+You can add your own parser if you want more control over the logic, or if you have a peculiar format type we don't support. Let's say, for example, we have a 
 
 ```
-rails g parser Date
+rails g parser Percentage
 ```
 
-**app/decanter/parsers/date_parser**
+Produces: **app/decanter/parsers/percentage_parser**
 
 ```ruby
-class DateParser < Decanter::ValueParser::Base
+class PercentageParser < Decanter::ValueParser::Base
   parser do |name, value, options|    
-    # your parsing logic here
+    float_regex = /(\d|[.])/
+    decimal = value.scan(float_regex).join.try(:to_f)
+    decimal / 100
   end
+end
+```
+
+Then in your decanter:
+
+```ruby
+class TripDecanter < Decanter::Base
+  input :start_date, :custom_date, my_custom_option: 'hello'
 end
 ```
 

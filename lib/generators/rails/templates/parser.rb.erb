@@ -3,5 +3,26 @@ class <%= class_name %>Parser < <%= parent_class_name %>
   parser do |name, value, options|
     value
   end
+
+  # --------------------------------
+  # Parsing String to Float
+  # --------------------------------
+  # REGEX = /(\d|[.])/
+  # allow Float, Fixnum # no parsing needed for these data types
+
+  # parser do |name, value, options|
+  #   value.scan(REGEX).join.try(:to_f)
+  # end
+
+
+  # --------------------------------
+  # Parsing String to Date
+  # --------------------------------
+  # allow Date
+
+  # parser do |name, value, options|
+    # parse_format = options.fetch(:parse_format, '%m/%d/%Y')
+    # ::Date.strptime(value, parse_format)
+  # end
 end
 <% end -%>
