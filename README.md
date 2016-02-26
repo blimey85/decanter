@@ -126,11 +126,12 @@ class TripsController < ApplicationController
     @trip.start_date = start_date
     @trip.end_date = end_date
 
-    @trip.destinations.each_with_index do |destination, index|
+    @trip.destinations.each_with_index do |dest, index|
       args = trip_params[:destinations_attributes]["#{index}"]
       arrival_date = args[:arrival_date]
-      destination.arrival_date = Date.strptime(arrival_date, '%m/%d/%Y')
-      destination.departure_date = Date.strptime(departure_date, '%m/%d/%Y')
+      dep_date = args[:departure_date]
+      dest.arrival_date = Date.strptime(arrival_date, '%m/%d/%Y')
+      dest.departure_date = Date.strptime(dep_date, '%m/%d/%Y')
     end
 
     if @trip.save
