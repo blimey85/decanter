@@ -170,6 +170,7 @@ describe Decanter::Core do
   end
 
   describe '#parse' do
+    let(:additional_data) { { foo: 'bar' }}
 
     context 'when a parser is not specified' do
 
@@ -182,18 +183,18 @@ describe Decanter::Core do
       end
 
       it 'returns the provided key and value' do
-        expect(dummy.parse(:first_name, nil, 'bar', {})).to eq({:first_name => 'bar'})
+        expect(dummy.parse(:first_name, nil, 'bar', {}, additional_data)).to eq({:first_name => 'bar'})
       end
 
       it 'does not call Parser.parsers_for' do
-        dummy.parse(:first_name, nil, 'bar', {})
+        dummy.parse(:first_name, nil, 'bar', {}, additional_data)
         expect(Decanter::Parser).to_not have_received(:parsers_for)
       end
     end
 
     context 'when a parser is specified but a required value is not present' do
       it 'raises an argument error specifying the key' do
-        expect { dummy.parse(:first_name, :foo, nil, {required: true}) }
+        expect { dummy.parse(:first_name, :foo, nil, {required: true}, additional_data) }
           .to raise_error(ArgumentError, "No value for required argument: first_name")
       end
     end
@@ -203,7 +204,7 @@ describe Decanter::Core do
       let(:val) { 8.0 }
 
       it 'returns the a key-value pair with the parsed value' do
-        expect(dummy.parse(key, :float, val.to_s, {})).to eq({key => val})
+        expect(dummy.parse(key, :float, val.to_s, {}, additional_data)).to eq({key => val})
       end
     end
 
@@ -212,7 +213,7 @@ describe Decanter::Core do
       let(:val) { 8.0 }
 
       it 'returns the a key-value pair with the parsed value' do
-        expect(dummy.parse(key, [:string, :float], val, {})).to eq({key => val})
+        expect(dummy.parse(key, [:string, :float], val, {}, additional_data)).to eq({key => val})
       end
     end
 
@@ -235,7 +236,7 @@ describe Decanter::Core do
       let(:val) { 8.0 }
 
       it 'returns the a key-value pair with the parsed value' do
-        expect(dummy.parse(key, [:string, :pct], val, {})).to eq({key => val/100})
+        expect(dummy.parse(key, [:string, :pct], val, {}, additional_data)).to eq({key => val/100})
       end
     end
 
@@ -245,7 +246,7 @@ describe Decanter::Core do
       let(:val) { "foo:3.45,baz:91" }
 
       it 'returns the a key-value pairs with the parsed values' do
-        expect(dummy.parse(key, [:key_value_splitter, :pct], val, {}))
+        expect(dummy.parse(key, [:key_value_splitter, :pct], val, {}, additional_data))
           .to eq({ 'foo' => 0.0345, 'baz' => 0.91 })
       end
     end
@@ -327,20 +328,21 @@ describe Decanter::Core do
     let(:args)    { { foo: 'hi', bar: 'bye' } }
     let(:name)    { [:foo, :bar] }
     let(:values)  { args.values_at(*name) }
+    let(:additional_data)  { { foo: :bar } }
     let(:handler) { { type: :input, name: name } }
 
     before(:each) { allow(dummy).to receive(:handle_input).and_return(:foobar) }
 
     context 'for an input' do
       it 'calls the handle_input with the handler and extracted values' do
-        dummy.handle(handler, args)
+        dummy.handle(handler, args, additional_data)
         expect(dummy)
           .to have_received(:handle_input)
-          .with(handler, values)
+          .with(handler, values, additional_data)
       end
 
       it 'returns the results form handle_input' do
-        expect(dummy.handle(handler, args)).to eq :foobar
+        expect(dummy.handle(handler, args, additional_data)).to eq :foobar
       end
     end
   end
@@ -352,6 +354,7 @@ describe Decanter::Core do
     let(:options) { double('options') }
     let(:args)    { { name => 'Hi', foo: 'bar' } }
     let(:values)  { args[name] }
+    let(:additional_data)  { { foo: :bar } }
     let(:handler) { { key: name, name: name, parsers: parser, options: options } }
 
     before(:each) do
@@ -359,10 +362,10 @@ describe Decanter::Core do
     end
 
     it 'calls parse with the handler key, handler parser, values and options' do
-      dummy.handle_input(handler, args)
+      dummy.handle_input(handler, args, additional_data)
       expect(dummy)
         .to have_received(:parse)
-        .with(name, parser, values, options)
+        .with(name, parser, values, options, additional_data)
     end
   end
 
@@ -512,6 +515,7 @@ describe Decanter::Core do
   describe '#decant' do
 
     let(:args) { { foo: 'bar', baz: 'foo'} }
+    let(:additional_data) { { other_foo: 'bar' } }
 
     before(:each) do
       allow(dummy).to receive(:unhandled_keys).and_return(args)
@@ -519,17 +523,17 @@ describe Decanter::Core do
     end
 
     it 'passes the args to unhandled keys' do
-      dummy.decant(args)
+      dummy.decant(args, additional_data)
       expect(dummy).to have_received(:unhandled_keys).with(args)
     end
 
     it 'passes the args to handled keys' do
-      dummy.decant(args)
-      expect(dummy).to have_received(:handled_keys).with(args)
+      dummy.decant(args, additional_data)
+      expect(dummy).to have_received(:handled_keys).with(args, additional_data)
     end
 
     it 'returns the merged result' do
-      expect(dummy.decant(args)).to eq args.merge(args)
+      expect(dummy.decant(args, additional_data)).to eq args.merge(args)
     end
   end
 end

@@ -29,7 +29,7 @@ describe Decanter::Extensions do
         dummy_class.decant(args, options)
         expect(decanter)
           .to have_received(:decant)
-          .with(args)
+          .with(args, options)
       end
     end
 
@@ -54,7 +54,7 @@ describe Decanter::Extensions do
         dummy_class.decant(args, options)
         expect(decanter)
           .to have_received(:decant)
-          .with(args)
+          .with(args, options)
       end
     end
   end

@@ -49,11 +49,11 @@ module Decanter
         @strict_mode = mode
       end
 
-      def decant(args)
+      def decant(args, additional_data={})
         return {} unless args.present?
         args = args.to_unsafe_h.with_indifferent_access if args.class.name == 'ActionController::Parameters'
         {}.merge( unhandled_keys(args) )
-          .merge( handled_keys(args) )
+          .merge( handled_keys(args, additional_data) )
       end
 
       # protected
@@ -80,33 +80,33 @@ module Decanter
         end
       end
 
-      def handled_keys(args)
+      def handled_keys(args, additional_data={})
         arg_keys = args.keys.map(&:to_sym)
         inputs, assocs = handlers.values.partition { |handler| handler[:type] == :input }
 
         {}.merge(
           # Inputs
           inputs.select     { |handler| (arg_keys & handler[:name]).any? }
-                .reduce({}) { |memo, handler| memo.merge handle_input(handler, args) }
+                .reduce({}) { |memo, handler| memo.merge handle_input(handler, args, additional_data) }
         ).merge(
           # Associations
-          assocs.reduce({}) { |memo, handler| memo.merge handle_association(handler, args) }
+          assocs.reduce({}) { |memo, handler| memo.merge handle_association(handler, args, additional_data) }
         )
       end
 
-      def handle(handler, args)
+      def handle(handler, args, additional_data={})
         values = args.values_at(*handler[:name])
         values = values.length == 1 ? values.first : values
-        self.send("handle_#{handler[:type]}", handler, values)
+        self.send("handle_#{handler[:type]}", handler, values, additional_data)
       end
 
-      def handle_input(handler, args)
+      def handle_input(handler, args, additional_data={})
          values = args.values_at(*handler[:name])
          values = values.length == 1 ? values.first : values
-         parse(handler[:key], handler[:parsers], values, handler[:options])
+         parse(handler[:key], handler[:parsers], values, handler[:options], additional_data)
       end
 
-      def handle_association(handler, args)
+      def handle_association(handler, args, additional_data={})
         assoc_handlers = [
           handler,
           handler.merge({
@@ -155,7 +155,7 @@ module Decanter
         end
       end
 
-      def parse(key, parsers, values, options)
+      def parse(key, parsers, values, options, additional_data)
         case
         when !parsers
           { key => values }
@@ -164,7 +164,7 @@ module Decanter
         else
           Parser.parsers_for(parsers)
                 .reduce({key => values}) do |vals_hash, parser|
-                  vals_hash.keys.reduce({}) { |acc, k| acc.merge(parser.parse(k, vals_hash[k], options)) }
+                  vals_hash.keys.reduce({}) { |acc, k| acc.merge(parser.parse(k, vals_hash[k], options.merge(additional_data))) }
                 end
         end
       end

@@ -40,7 +40,7 @@ module Decanter
           Decanter.decanter_from(specified_decanter)
         else
           Decanter.decanter_for(self)
-        end.decant(args)
+        end.decant(args, options)
       end
     end
 
