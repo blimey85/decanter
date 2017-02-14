@@ -122,29 +122,29 @@ module Decanter
           {}
         when 1
           _handler = assoc_handlers.detect { |_handler| args.has_key?(_handler[:name]) }
-          self.send("handle_#{_handler[:type]}", _handler, args[_handler[:name]])
+          self.send("handle_#{_handler[:type]}", _handler, args[_handler[:name]], additional_data)
         else
           raise ArgumentError.new("Handler #{handler[:name]} matches multiple keys: #{assoc_handler_names}.")
         end
       end
 
-      def handle_has_many(handler, values)
+      def handle_has_many(handler, values, additional_data={})
         decanter = decanter_for_handler(handler)
         if values.is_a?(Hash)
           parsed_values = values.map do |index, input_values|
             next if input_values.nil?
-            decanter.decant(input_values)
+            decanter.decant(input_values, additional_data)
           end
           return { handler[:key] => parsed_values }
         else
           {
-            handler[:key] => values.compact.map { |value| decanter.decant(value) }
+            handler[:key] => values.compact.map { |value| decanter.decant(value, additional_data) }
           }
         end
       end
 
-      def handle_has_one(handler, values)
-        { handler[:key] => decanter_for_handler(handler).decant(values) }
+      def handle_has_one(handler, values, additional_data={})
+        { handler[:key] => decanter_for_handler(handler).decant(values, additional_data) }
       end
 
       def decanter_for_handler(handler)

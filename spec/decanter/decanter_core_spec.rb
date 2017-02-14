@@ -170,7 +170,7 @@ describe Decanter::Core do
   end
 
   describe '#parse' do
-    let(:additional_data) { { foo: 'bar' }}
+    let(:additional_data) { {} }
 
     context 'when a parser is not specified' do
 
@@ -374,6 +374,7 @@ describe Decanter::Core do
     let(:output)   { { foo: 'bar' } }
     let(:handler)  { { key: 'key', options: {} } }
     let(:values)   { { baz: 'foo' } }
+    let(:additional_data)   { { x: 'y' } }
     let(:decanter) { double('decanter') }
 
     before(:each) do
@@ -395,14 +396,14 @@ describe Decanter::Core do
     end
 
     it 'calls decant with the values on the found decanter' do
-      dummy.handle_has_one(handler, values)
+      dummy.handle_has_one(handler, values, additional_data)
       expect(decanter)
         .to have_received(:decant)
-        .with(values)
+        .with(values, additional_data)
     end
 
     it 'returns an array containing the key, and the decanted value' do
-      expect(dummy.handle_has_one(handler, values))
+      expect(dummy.handle_has_one(handler, values, additional_data))
         .to match ({handler[:key] => output})
     end
   end
@@ -412,6 +413,7 @@ describe Decanter::Core do
     let(:output)   { [{ foo: 'bar' },{ bar: 'foo' }] }
     let(:handler)  { { key: 'key', options: {} } }
     let(:values)   { [{ baz: 'foo' }, { faz: 'boo' }] }
+    let(:additional_data)   { { x: 'y' } }
     let(:decanter) { double('decanter') }
 
     before(:each) do
@@ -426,24 +428,24 @@ describe Decanter::Core do
     end
 
     it 'calls decanter_for_handler with the handler' do
-      dummy.handle_has_many(handler, values)
+      dummy.handle_has_many(handler, values, additional_data)
       expect(dummy)
         .to have_received(:decanter_for_handler)
         .with(handler)
     end
 
     it 'calls decant with the each of the values on the found decanter' do
-      dummy.handle_has_many(handler, values)
+      dummy.handle_has_many(handler, values, additional_data)
       expect(decanter)
         .to have_received(:decant)
-        .with(values[0])
+        .with(values[0], additional_data)
       expect(decanter)
         .to have_received(:decant)
-        .with(values[1])
+        .with(values[1], additional_data)
     end
 
     it 'returns an array containing the key, and an array of decanted values' do
-      expect(dummy.handle_has_many(handler, values))
+      expect(dummy.handle_has_many(handler, values, additional_data))
         .to match ({handler[:key] => output})
     end
   end
@@ -471,7 +473,7 @@ describe Decanter::Core do
         dummy.handle_association(handler, args)
         expect(dummy)
           .to have_received(:handle_has_one)
-          .with(handler, args[assoc])
+          .with(handler, args[assoc], {})
       end
     end
 
@@ -483,7 +485,7 @@ describe Decanter::Core do
         dummy.handle_association(handler, args)
         expect(dummy)
           .to have_received(:handle_has_one)
-          .with(hash_including(name: "#{assoc}_attributes".to_sym), args[:profile_attributes])
+          .with(hash_including(name: "#{assoc}_attributes".to_sym), args[:profile_attributes], {})
       end
     end
 
